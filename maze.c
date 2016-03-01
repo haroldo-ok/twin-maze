@@ -9,6 +9,7 @@
 #define WINDOW_WIDTH 14
 #define WINDOW_HEIGHT 14
 #define WINDOW_CENTER_X (WINDOW_WIDTH >> 1)
+#define WINDOW_CENTER_Y (WINDOW_HEIGHT >> 1)
 
 void load_palette() {
 	unsigned char i;
@@ -40,18 +41,38 @@ void draw_char(unsigned char x, unsigned char y, char c) {
   SMS_setTileatXY(x, y, c - 32);
 }
 
+void draw_front(unsigned char x, unsigned char y, unsigned char z, char pos) {
+	char x1 = x + WINDOW_CENTER_X + pos - z;
+	char x2 = x1 + z + z;
+	char y1 = y + WINDOW_CENTER_Y - z;
+	char y2 = y1 + z + z - 1;
+	char xi, yi;
+	char ch = '0' + z;
+
+	for (xi = x1; xi != x2; xi++) {
+		draw_char(xi, y1, '=');
+		draw_char(xi, y2, '=');
+		for (yi = y1 + 1; yi < y2; yi++) {
+			draw_char(xi, yi, ch);
+		}
+	}
+}
+
 void draw_window(unsigned char x, unsigned char y) {
 	unsigned char i;
 
 	for (i = 0; i != WINDOW_CENTER_X; i++) {
 		draw_char(x + i, y + i, '\\');
-		draw_char(x + i, y + WINDOW_HEIGHT - i, '/');
-		draw_char(x + WINDOW_WIDTH - i, y + i, '/');
-		draw_char(x + WINDOW_HEIGHT - i, y + WINDOW_HEIGHT - i, '\\');
+		draw_char(x + i, y + WINDOW_HEIGHT - i - 1, '/');
+		draw_char(x + WINDOW_WIDTH - i - 1, y + i, '/');
+		draw_char(x + WINDOW_HEIGHT - i - 1, y + WINDOW_HEIGHT - i - 1, '\\');
 	}
+
 }
 
 void main(void) {
+	char i;
+
 	load_palette();
 	load_font();
 	SMS_displayOn();
@@ -59,7 +80,16 @@ void main(void) {
 	draw_window(1, 1);
 	draw_window(17, 1);
 
-	while (true) {}
+	draw_front(1, 1, 3, 0);
+
+	i = 0;
+	while (true) {
+		SMS_waitForVBlank();
+		draw_window(1, 1);
+		draw_front(1, 1, i + 1, 0);
+
+		i = (i + 1) % 7;
+	}
 
 }
 
