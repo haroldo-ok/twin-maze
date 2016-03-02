@@ -47,34 +47,31 @@ void draw_canvas_char(unsigned char x, unsigned char y, char c) {
 	window_canvas[x][y] = c;
 }
 
-void draw_front(unsigned char x, unsigned char y, unsigned char z, char pos) {
-	char x1 = x + WINDOW_CENTER_X + pos - z;
+void draw_front(unsigned char z, char pos) {
+	char x1 = WINDOW_CENTER_X + pos - z;
 	char x2 = x1 + z + z;
-	char y1 = y + WINDOW_CENTER_Y - z;
+	char y1 = WINDOW_CENTER_Y - z;
 	char y2 = y1 + z + z - 1;
 	char xi, yi;
 	char ch = '0' + z;
 
 	for (xi = x1; xi != x2; xi++) {
-		draw_char(xi, y1, '=');
-		draw_char(xi, y2, '=');
+		draw_canvas_char(xi, y1, '=');
+		draw_canvas_char(xi, y2, '=');
 		for (yi = y1 + 1; yi < y2; yi++) {
-			draw_char(xi, yi, ch);
+			draw_canvas_char(xi, yi, ch);
 		}
 	}
+}
+
+void clear_canvas() {
+	memset(window_canvas[0], ' ', WINDOW_WIDTH * WINDOW_HEIGHT);
 }
 
 void draw_window_canvas(unsigned char x, unsigned char y) {
 		unsigned int buffer[WINDOW_WIDTH], *p_b;
 		char cy, cx, *p_l, *p_c;
 
-/*
-		for (cy = 0; cy != WINDOW_HEIGHT; cy++) {
-			for (cx = 0, p_c = window_canvas[0] + cy; cx != WINDOW_HEIGHT; cx++, p_c += WINDOW_HEIGHT) {
-				draw_char(cx, cy, *p_c);
-			}
-		}
-*/
 		for (cy = WINDOW_HEIGHT, p_l = window_canvas[0]; cy; cy--, p_l++) {
 			for (cx = WINDOW_WIDTH, p_b = buffer, p_c = p_l; cx; cx--, p_b++, p_c += WINDOW_HEIGHT) {
 				*p_b = *p_c - 32;
@@ -112,9 +109,12 @@ void main(void) {
 
 	i = 0;
 	while (true) {
+		clear_canvas();
+
 		SMS_waitForVBlank();
 		draw_window(1, 1);
-		draw_front(1, 1, i + 1, 0);
+		draw_front(i + 1, 0);
+		draw_window_canvas(1, 1);
 
 		i = (i + 1) % 7;
 	}
