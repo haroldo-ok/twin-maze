@@ -64,6 +64,27 @@ void draw_front(unsigned char z, char pos) {
 	}
 }
 
+void draw_side(unsigned char z1, unsigned char z2, char pos) {
+	char incr = pos < 0 ? -1 : 1;
+	char x1 = WINDOW_CENTER_X + (pos < 0 ?  -z1 : z1 - 1);
+	char x2 = WINDOW_CENTER_X + (pos < 0 ?  -z2 - 1 : z2);
+	char y1 = WINDOW_CENTER_Y - z1;
+	char y2 = WINDOW_CENTER_Y + z1 - 1;
+	char ch0 = '0' + z2;
+	char cht = pos < 0 ? '\\' : '/';
+	char chb = pos < 0 ? '/' : '\\';
+	char xi, yi;
+
+	for (xi = x1; xi != x2; xi += incr) {
+		draw_canvas_char(xi, y1, cht);
+		draw_canvas_char(xi, y2, chb);
+		for (yi = y1 + 1; yi < y2; yi++) {
+			draw_canvas_char(xi, yi, ch0);
+		}
+		y1--, y2++;
+	}
+}
+
 void clear_canvas() {
 	memset(window_canvas[0], ' ', WINDOW_WIDTH * WINDOW_HEIGHT);
 }
@@ -85,12 +106,8 @@ void draw_window_canvas(unsigned char x, unsigned char y) {
 void draw_window(unsigned char x, unsigned char y) {
 	unsigned char i;
 
-	for (i = 0; i != WINDOW_CENTER_X; i++) {
-		draw_canvas_char(i, i, '\\');
-		draw_canvas_char(i, WINDOW_HEIGHT - i - 1, '/');
-		draw_canvas_char(WINDOW_WIDTH - i - 1, i, '/');
-		draw_canvas_char(WINDOW_HEIGHT - i - 1, WINDOW_HEIGHT - i - 1, '\\');
-	}
+	draw_side(0, 7, -1);
+	draw_side(0, 7, 1);
 
 	draw_window_canvas(x, y);
 }
@@ -113,7 +130,7 @@ void main(void) {
 
 		SMS_waitForVBlank();
 		draw_window(1, 1);
-		draw_front(i + 1, 0);
+//		draw_front(i + 1, 0);
 		draw_window_canvas(1, 1);
 
 		i = (i + 1) % 7;
