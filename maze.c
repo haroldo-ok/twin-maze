@@ -11,6 +11,8 @@
 #define WINDOW_CENTER_X (WINDOW_WIDTH >> 1)
 #define WINDOW_CENTER_Y (WINDOW_HEIGHT >> 1)
 
+char window_canvas[WINDOW_WIDTH][WINDOW_HEIGHT];
+
 void load_palette() {
 	unsigned char i;
 
@@ -41,6 +43,10 @@ void draw_char(unsigned char x, unsigned char y, char c) {
   SMS_setTileatXY(x, y, c - 32);
 }
 
+void draw_canvas_char(unsigned char x, unsigned char y, char c) {
+	window_canvas[x][y] = c;
+}
+
 void draw_front(unsigned char x, unsigned char y, unsigned char z, char pos) {
 	char x1 = x + WINDOW_CENTER_X + pos - z;
 	char x2 = x1 + z + z;
@@ -58,16 +64,38 @@ void draw_front(unsigned char x, unsigned char y, unsigned char z, char pos) {
 	}
 }
 
+void draw_window_canvas(unsigned char x, unsigned char y) {
+		unsigned int buffer[WINDOW_WIDTH], *p_b;
+		char cy, cx, *p_l, *p_c;
+
+/*
+		for (cy = 0; cy != WINDOW_HEIGHT; cy++) {
+			for (cx = 0, p_c = window_canvas[0] + cy; cx != WINDOW_HEIGHT; cx++, p_c += WINDOW_HEIGHT) {
+				draw_char(cx, cy, *p_c);
+			}
+		}
+*/
+		for (cy = WINDOW_HEIGHT, p_l = window_canvas[0]; cy; cy--, p_l++) {
+			for (cx = WINDOW_WIDTH, p_b = buffer, p_c = p_l; cx; cx--, p_b++, p_c += WINDOW_HEIGHT) {
+				*p_b = *p_c - 32;
+			}
+
+			SMS_loadTileMap(x, y, buffer, WINDOW_WIDTH << 1);
+			y++;
+		}
+}
+
 void draw_window(unsigned char x, unsigned char y) {
 	unsigned char i;
 
 	for (i = 0; i != WINDOW_CENTER_X; i++) {
-		draw_char(x + i, y + i, '\\');
-		draw_char(x + i, y + WINDOW_HEIGHT - i - 1, '/');
-		draw_char(x + WINDOW_WIDTH - i - 1, y + i, '/');
-		draw_char(x + WINDOW_HEIGHT - i - 1, y + WINDOW_HEIGHT - i - 1, '\\');
+		draw_canvas_char(i, i, '\\');
+		draw_canvas_char(i, WINDOW_HEIGHT - i - 1, '/');
+		draw_canvas_char(WINDOW_WIDTH - i - 1, i, '/');
+		draw_canvas_char(WINDOW_HEIGHT - i - 1, WINDOW_HEIGHT - i - 1, '\\');
 	}
 
+	draw_window_canvas(x, y);
 }
 
 void main(void) {
@@ -80,7 +108,7 @@ void main(void) {
 	draw_window(1, 1);
 	draw_window(17, 1);
 
-	draw_front(1, 1, 3, 0);
+//	draw_front(1, 1, 3, 0);
 
 	i = 0;
 	while (true) {
