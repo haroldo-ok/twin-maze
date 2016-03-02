@@ -44,7 +44,9 @@ void draw_char(unsigned char x, unsigned char y, char c) {
 }
 
 void draw_canvas_char(unsigned char x, unsigned char y, char c) {
-	window_canvas[x][y] = c;
+	if (x >= 0 && x < WINDOW_WIDTH && y >= 0 && y < WINDOW_HEIGHT) {
+		window_canvas[x][y] = c;
+	}
 }
 
 void draw_front(unsigned char z, char pos) {
@@ -53,7 +55,7 @@ void draw_front(unsigned char z, char pos) {
 	char y1 = WINDOW_CENTER_Y - z;
 	char y2 = y1 + z + z - 1;
 	char xi, yi;
-	char ch = '0' + z;
+	char ch = '*';
 
 	for (xi = x1; xi != x2; xi++) {
 		draw_canvas_char(xi, y1, '=');
@@ -66,14 +68,18 @@ void draw_front(unsigned char z, char pos) {
 
 void draw_side(unsigned char z1, unsigned char z2, char pos) {
 	char incr = pos < 0 ? -1 : 1;
-	char x1 = WINDOW_CENTER_X + (pos < 0 ?  -z1 : z1 - 1);
+	char x1 = WINDOW_CENTER_X + (pos < 0 ?  -z1 - 1 : z1);
 	char x2 = WINDOW_CENTER_X + (pos < 0 ?  -z2 - 1 : z2);
-	char y1 = WINDOW_CENTER_Y - z1;
-	char y2 = WINDOW_CENTER_Y + z1 - 1;
-	char ch0 = '0' + z2;
+	char y1 = WINDOW_CENTER_Y - z1 - 1;
+	char y2 = WINDOW_CENTER_Y + z1;
+	char ch0 = '|';
 	char cht = pos < 0 ? '\\' : '/';
 	char chb = pos < 0 ? '/' : '\\';
 	char xi, yi;
+
+	if (z2 <= z1) {
+		return;
+	}
 
 	for (xi = x1; xi != x2; xi += incr) {
 		draw_canvas_char(xi, y1, cht);
@@ -113,7 +119,7 @@ void draw_window(unsigned char x, unsigned char y) {
 }
 
 void main(void) {
-	char i;
+	char timer, z;
 
 	load_palette();
 	load_font();
@@ -124,16 +130,30 @@ void main(void) {
 
 //	draw_front(1, 1, 3, 0);
 
-	i = 0;
+	timer = 0;
 	while (true) {
 		clear_canvas();
 
+		for (z = 5; z; z--) {
+			SMS_waitForVBlank();
+		}
+
+		// Left
+		z = timer;
+		draw_side(0, z, -1);
+		draw_front(z, -(z + z));
+		draw_side(z + z, 7, -1);
+
+		// Right
+		z = (timer + 3) % 7;
+		draw_side(0, z, 1);
+		draw_front(z, (z + z));
+		draw_side(z + z, 7, 1);
+
 		SMS_waitForVBlank();
-		draw_window(1, 1);
-//		draw_front(i + 1, 0);
 		draw_window_canvas(1, 1);
 
-		i = (i + 1) % 7;
+		timer = (timer + 1) % 7;
 	}
 
 }
