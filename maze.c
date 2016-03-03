@@ -13,6 +13,16 @@
 
 char window_canvas[WINDOW_WIDTH][WINDOW_HEIGHT];
 
+char player_x, player_y;
+
+const char map[][8] = {
+	"#######",
+	"#.....#",
+	"#.###.#",
+	"#.....#",
+	"#######",
+};
+
 void load_palette() {
 	unsigned char i;
 
@@ -43,7 +53,7 @@ void draw_char(unsigned char x, unsigned char y, char c) {
   SMS_setTileatXY(x, y, c - 32);
 }
 
-void draw_canvas_char(unsigned char x, unsigned char y, char c) {
+void draw_canvas_char(char x, char y, char c) {
 	if (x >= 0 && x < WINDOW_WIDTH && y >= 0 && y < WINDOW_HEIGHT) {
 		window_canvas[x][y] = c;
 	}
@@ -119,7 +129,8 @@ void draw_window(unsigned char x, unsigned char y) {
 }
 
 void main(void) {
-	char timer, z;
+	char timer, z, prev_z;
+	char y;
 
 	load_palette();
 	load_font();
@@ -129,6 +140,8 @@ void main(void) {
 	draw_window(17, 1);
 
 //	draw_front(1, 1, 3, 0);
+	player_x = 1;
+	player_y = 2;
 
 	timer = 0;
 	while (true) {
@@ -138,6 +151,7 @@ void main(void) {
 			SMS_waitForVBlank();
 		}
 
+		/*
 		// Left
 		z = timer;
 		draw_side(0, z, -1);
@@ -149,6 +163,25 @@ void main(void) {
 		draw_side(0, z, 1);
 		draw_front(z, (z + z));
 		draw_side(z + z, 7, 1);
+		*/
+		for (y = 3, z = 1, prev_z = 0; y > -1; y--, prev_z = z, z += z) {
+			// Left
+			if (map[player_y + y][player_x + 1] == '#') {
+				draw_front(z, -(z + z));
+				draw_side(prev_z, z, -1);
+			}
+
+			// Right
+			if (map[player_y + y][player_x - 1] == '#') {
+				draw_front(z, (z + z));
+				draw_side(prev_z, z, 1);
+			}
+
+			// Center
+			if (map[player_y + y][player_x] == '#') {
+				draw_front(z, 0);
+			}
+		}
 
 		SMS_waitForVBlank();
 		draw_window_canvas(1, 1);
