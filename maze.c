@@ -131,6 +131,7 @@ void draw_window(unsigned char x, unsigned char y) {
 void main(void) {
 	char timer, z, prev_z;
 	char y;
+	unsigned int kp;
 
 	load_palette();
 	load_font();
@@ -145,11 +146,16 @@ void main(void) {
 
 	timer = 0;
 	while (true) {
-		clear_canvas();
+		kp = SMS_getKeysStatus();
 
-		for (z = 5; z; z--) {
-			SMS_waitForVBlank();
+		if (kp & PORT_A_KEY_UP) {
+			player_y++;
 		}
+		if (kp & PORT_A_KEY_DOWN) {
+			player_y--;
+		}
+
+		clear_canvas();
 
 		/*
 		// Left
