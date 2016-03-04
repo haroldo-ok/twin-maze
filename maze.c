@@ -177,9 +177,13 @@ char get_map_at(char x, char y, char dx, char dy, char dir) {
 
 void move_actor_direction(actor *a, char dx, char dy) {
 	char dir = a->dir;
+	char nx = a->x + project_x(dx, dy, dir);
+	char ny = a->y + project_y(dx, dy, dir);
 
-	a->x += project_x(dx, dy, dir);
-	a->y += project_y(dx, dy, dir);
+	if (map[ny][nx] != '#') {
+		a->x = nx;
+		a->y = ny;
+	}
 }
 
 void main(void) {
