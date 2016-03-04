@@ -7,4 +7,5 @@ gfx.*
 *.rel
 *.sym
 *.asm
+*.sav
 /*.sms

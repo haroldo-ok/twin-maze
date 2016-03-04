@@ -20,10 +20,12 @@
 typedef struct _actor {
 	char x, y;
 	char dir;
+	int delay;
 } actor;
 
 char window_canvas[WINDOW_WIDTH][WINDOW_HEIGHT];
 
+unsigned char frame_counter, current_frame_counter, test_counter;
 actor player;
 
 const char map[][8] = {
@@ -33,6 +35,13 @@ const char map[][8] = {
 	"#.....#",
 	"#######",
 };
+
+void line_interrupt_handler() {
+	frame_counter++;
+
+	SMS_enableLineInterrupt();
+	SMS_setLineCounter(0xC0);
+}
 
 void load_palette() {
 	unsigned char i;
@@ -195,6 +204,11 @@ void main(void) {
 	load_font();
 	SMS_displayOn();
 
+	frame_counter = 0;
+	SMS_setLineInterruptHandler(line_interrupt_handler);
+	SMS_enableLineInterrupt();
+	SMS_setLineCounter(0xC0);
+
 	player.x = 1;
 	player.y = 2;
 	player.dir = DIRECTION_SOUTH;
@@ -203,19 +217,35 @@ void main(void) {
 	while (true) {
 		kp = SMS_getKeysStatus();
 
-		if (kp & PORT_A_KEY_UP) {
-			move_actor_direction(&player, 0, 1);
+		test_counter += frame_counter;
+		current_frame_counter = frame_counter;
+		frame_counter = 0;
+		draw_char(0, 1, (test_counter & 0x0F) + 33);
+
+		if (!player.delay) {
+			if (kp & PORT_A_KEY_UP) {
+				move_actor_direction(&player, 0, 1);
+				player.delay = 15;
+			}
+			if (kp & PORT_A_KEY_DOWN) {
+				move_actor_direction(&player, 0, -1);
+				player.delay = 15;
+			}
+			if (kp & PORT_A_KEY_LEFT) {
+				player.dir++;
+				player.delay = 15;
+			}
+			if (kp & PORT_A_KEY_RIGHT) {
+				player.dir--;
+				player.delay = 15;
+			}
+			player.dir &= DIRECTION_MASK;
+		} else {
+			player.delay -= current_frame_counter;
+			if (player.delay < 0) {
+				player.delay = 0;
+			}
 		}
-		if (kp & PORT_A_KEY_DOWN) {
-			move_actor_direction(&player, 0, -1);
-		}
-		if (kp & PORT_A_KEY_LEFT) {
-			player.dir++;
-		}
-		if (kp & PORT_A_KEY_RIGHT) {
-			player.dir--;
-		}
-		player.dir &= DIRECTION_MASK;
 
 		clear_canvas();
 
@@ -249,9 +279,14 @@ void main(void) {
 			if (get_map_at(player.x, player.y, 0, y, player.dir) == '#') {
 				draw_front(z, 0);
 			}
+
 		}
 
 		SMS_waitForVBlank();
+		/*
+		SMS_enableLineInterrupt();
+		SMS_setLineCounter(4);
+		*/
 		draw_window_canvas(1, 1);
 
 		timer = (timer + 1) % 7;
