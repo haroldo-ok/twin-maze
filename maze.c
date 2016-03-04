@@ -27,6 +27,7 @@ char window_canvas[WINDOW_WIDTH][WINDOW_HEIGHT];
 
 unsigned char frame_counter, current_frame_counter, test_counter;
 actor player;
+unsigned int player_1_tiles[WINDOW_WIDTH * WINDOW_HEIGHT];
 
 const char map[][8] = {
 	"#######",
@@ -125,27 +126,15 @@ void clear_canvas() {
 	memset(window_canvas[0], ' ', WINDOW_WIDTH * WINDOW_HEIGHT);
 }
 
-void draw_window_canvas(unsigned char x, unsigned char y) {
-		unsigned int buffer[WINDOW_WIDTH], *p_b;
+void draw_window_canvas(unsigned int *buffer) {
+		unsigned int *p_b = buffer;
 		char cy, cx, *p_l, *p_c;
 
 		for (cy = WINDOW_HEIGHT, p_l = window_canvas[0]; cy; cy--, p_l++) {
-			for (cx = WINDOW_WIDTH, p_b = buffer, p_c = p_l; cx; cx--, p_b++, p_c += WINDOW_HEIGHT) {
+			for (cx = WINDOW_WIDTH, p_c = p_l; cx; cx--, p_b++, p_c += WINDOW_HEIGHT) {
 				*p_b = *p_c - 32;
 			}
-
-			SMS_loadTileMap(x, y, buffer, WINDOW_WIDTH << 1);
-			y++;
 		}
-}
-
-void draw_window(unsigned char x, unsigned char y) {
-	unsigned char i;
-
-	draw_side(0, 7, -1);
-	draw_side(0, 7, 1);
-
-	draw_window_canvas(x, y);
 }
 
 char project_x(char x, char y, char direction) {
@@ -248,7 +237,6 @@ void draw_player(actor *p) {
 }
 
 void main(void) {
-	char timer, z, prev_z;
 	unsigned int kp;
 
 	load_palette();
@@ -290,9 +278,10 @@ void main(void) {
 		draw_side(z + z, 7, 1);
 		*/
 		draw_player(&player);
+		draw_window_canvas(player_1_tiles);
 
 		SMS_waitForVBlank();
-		draw_window_canvas(1, 1);
+		SMS_loadTileMapArea (1, 1, player_1_tiles, WINDOW_WIDTH, WINDOW_HEIGHT);
 	}
 
 }
