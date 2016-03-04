@@ -26,8 +26,8 @@ typedef struct _actor {
 char window_canvas[WINDOW_WIDTH][WINDOW_HEIGHT];
 
 unsigned char frame_counter, current_frame_counter, test_counter;
-actor player;
-unsigned int player_1_tiles[WINDOW_WIDTH * WINDOW_HEIGHT];
+actor player_1, player_2;
+unsigned int player_1_tiles[WINDOW_WIDTH * WINDOW_HEIGHT], player_2_tiles[WINDOW_WIDTH * WINDOW_HEIGHT];
 
 const char map[][8] = {
 	"#######",
@@ -39,9 +39,6 @@ const char map[][8] = {
 
 void line_interrupt_handler() {
 	frame_counter++;
-
-	SMS_enableLineInterrupt();
-	SMS_setLineCounter(0xC0);
 }
 
 void load_palette() {
@@ -248,9 +245,15 @@ void main(void) {
 	SMS_enableLineInterrupt();
 	SMS_setLineCounter(0xC0);
 
-	player.x = 1;
-	player.y = 2;
-	player.dir = DIRECTION_SOUTH;
+	player_1.x = 1;
+	player_1.y = 2;
+	player_1.dir = DIRECTION_SOUTH;
+	player_1.delay = 0;
+
+	player_2.x = 3;
+	player_2.y = 1;
+	player_2.dir = DIRECTION_WEST;
+	player_2.delay = 0;
 
 	while (true) {
 		kp = SMS_getKeysStatus();
@@ -260,28 +263,20 @@ void main(void) {
 		frame_counter = 0;
 		draw_char(0, 1, (test_counter & 0x0F) + 33);
 
-		move_player(&player, kp);
+		move_player(&player_1, kp);
+		move_player(&player_2, kp);
 
 		clear_canvas();
-
-		/*
-		// Left
-		z = timer;
-		draw_side(0, z, -1);
-		draw_front(z, -(z + z));
-		draw_side(z + z, 7, -1);
-
-		// Right
-		z = (timer + 3) % 7;
-		draw_side(0, z, 1);
-		draw_front(z, (z + z));
-		draw_side(z + z, 7, 1);
-		*/
-		draw_player(&player);
+		draw_player(&player_1);
 		draw_window_canvas(player_1_tiles);
+
+		clear_canvas();
+		draw_player(&player_2);
+		draw_window_canvas(player_2_tiles);
 
 		SMS_waitForVBlank();
 		SMS_loadTileMapArea (1, 1, player_1_tiles, WINDOW_WIDTH, WINDOW_HEIGHT);
+		SMS_loadTileMapArea (17, 1, player_2_tiles, WINDOW_WIDTH, WINDOW_HEIGHT);
 	}
 
 }
