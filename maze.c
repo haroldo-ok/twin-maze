@@ -222,9 +222,33 @@ void move_player(actor *p, unsigned int kp) {
 	}
 }
 
+void draw_player(actor *p) {
+	char y;
+	char z, prev_z;
+
+	for (y = 3, z = 1, prev_z = 0; y > -1; y--, prev_z = z, z += z) {
+		// Left
+		if (get_map_at(p->x, p->y, -1, y, p->dir) == '#') {
+			draw_front(z, -(z + z));
+			draw_side(prev_z, z, -1);
+		}
+
+		// Right
+		if (get_map_at(p->x, p->y, 1, y, p->dir) == '#') {
+			draw_front(z, (z + z));
+			draw_side(prev_z, z, 1);
+		}
+
+		// Center
+		if (get_map_at(p->x, p->y, 0, y, p->dir) == '#') {
+			draw_front(z, 0);
+		}
+
+	}
+}
+
 void main(void) {
 	char timer, z, prev_z;
-	char y, t_x, t_y;
 	unsigned int kp;
 
 	load_palette();
@@ -240,7 +264,6 @@ void main(void) {
 	player.y = 2;
 	player.dir = DIRECTION_SOUTH;
 
-	timer = 0;
 	while (true) {
 		kp = SMS_getKeysStatus();
 
@@ -266,30 +289,10 @@ void main(void) {
 		draw_front(z, (z + z));
 		draw_side(z + z, 7, 1);
 		*/
-		for (y = 3, z = 1, prev_z = 0; y > -1; y--, prev_z = z, z += z) {
-			// Left
-			if (get_map_at(player.x, player.y, -1, y, player.dir) == '#') {
-				draw_front(z, -(z + z));
-				draw_side(prev_z, z, -1);
-			}
-
-			// Right
-			if (get_map_at(player.x, player.y, 1, y, player.dir) == '#') {
-				draw_front(z, (z + z));
-				draw_side(prev_z, z, 1);
-			}
-
-			// Center
-			if (get_map_at(player.x, player.y, 0, y, player.dir) == '#') {
-				draw_front(z, 0);
-			}
-
-		}
+		draw_player(&player);
 
 		SMS_waitForVBlank();
 		draw_window_canvas(1, 1);
-
-		timer = (timer + 1) % 7;
 	}
 
 }
