@@ -27,7 +27,7 @@ char window_canvas[WINDOW_WIDTH][WINDOW_HEIGHT];
 
 unsigned char frame_counter, current_frame_counter, test_counter;
 actor player_1, player_2;
-unsigned int player_1_tiles[WINDOW_WIDTH * WINDOW_HEIGHT], player_2_tiles[WINDOW_WIDTH * WINDOW_HEIGHT];
+unsigned int player_tiles[WINDOW_WIDTH * WINDOW_HEIGHT];
 
 const char map[][8] = {
 	"#######",
@@ -235,6 +235,7 @@ void draw_player(actor *p) {
 
 void main(void) {
 	unsigned int kp;
+	bool alternating_frame = false;
 
 	load_palette();
 	load_font();
@@ -266,17 +267,14 @@ void main(void) {
 		move_player(&player_1, kp);
 		move_player(&player_2, kp);
 
-		clear_canvas();
-		draw_player(&player_1);
-		draw_window_canvas(player_1_tiles);
+		alternating_frame = !alternating_frame;
 
 		clear_canvas();
-		draw_player(&player_2);
-		draw_window_canvas(player_2_tiles);
+		draw_player(alternating_frame ? &player_1 : &player_2);
+		draw_window_canvas(player_tiles);
 
 		SMS_waitForVBlank();
-		SMS_loadTileMapArea (1, 1, player_1_tiles, WINDOW_WIDTH, WINDOW_HEIGHT);
-		SMS_loadTileMapArea (17, 1, player_2_tiles, WINDOW_WIDTH, WINDOW_HEIGHT);
+		SMS_loadTileMapArea (alternating_frame ? 1 : 17, 1, player_tiles, WINDOW_WIDTH, WINDOW_HEIGHT);
 	}
 
 }
