@@ -11,9 +11,19 @@
 #define WINDOW_CENTER_X (WINDOW_WIDTH >> 1)
 #define WINDOW_CENTER_Y (WINDOW_HEIGHT >> 1)
 
+#define DIRECTION_EAST 0
+#define DIRECTION_NORTH 1
+#define DIRECTION_WEST 2
+#define DIRECTION_SOUTH 3
+
+typedef struct _actor {
+	char x, y;
+	char dir;
+} actor;
+
 char window_canvas[WINDOW_WIDTH][WINDOW_HEIGHT];
 
-char player_x, player_y;
+actor player;
 
 const char map[][8] = {
 	"#######",
@@ -128,32 +138,72 @@ void draw_window(unsigned char x, unsigned char y) {
 	draw_window_canvas(x, y);
 }
 
+char project_x(char x, char y, char direction) {
+	switch (direction) {
+		case DIRECTION_NORTH:
+			return x;
+ 		case DIRECTION_SOUTH:
+			return -x;
+		case DIRECTION_EAST:
+			return y;
+		case DIRECTION_WEST:
+			return -y;
+	}
+
+	return 0;
+}
+
+char project_y(char x, char y, char direction) {
+	switch (direction) {
+		case DIRECTION_NORTH:
+			return -y;
+ 		case DIRECTION_SOUTH:
+			return y;
+		case DIRECTION_EAST:
+			return x;
+		case DIRECTION_WEST:
+			return -x;
+	}
+
+	return 0;
+}
+
+char get_map_at(char x, char y, char dx, char dy, char dir) {
+	x += project_x(dx, dy, dir);
+	y += project_y(dx, dy, dir);
+	return map[y][x];
+}
+
 void main(void) {
 	char timer, z, prev_z;
-	char y;
+	char y, t_x, t_y;
 	unsigned int kp;
 
 	load_palette();
 	load_font();
 	SMS_displayOn();
 
-	draw_window(1, 1);
-	draw_window(17, 1);
-
-//	draw_front(1, 1, 3, 0);
-	player_x = 1;
-	player_y = 2;
+	player.x = 1;
+	player.y = 2;
+	player.dir = DIRECTION_SOUTH;
 
 	timer = 0;
 	while (true) {
 		kp = SMS_getKeysStatus();
 
 		if (kp & PORT_A_KEY_UP) {
-			player_y++;
+			player.y++;
 		}
 		if (kp & PORT_A_KEY_DOWN) {
-			player_y--;
+			player.y--;
 		}
+		if (kp & PORT_A_KEY_LEFT) {
+			player.dir++;
+		}
+		if (kp & PORT_A_KEY_RIGHT) {
+			player.dir--;
+		}
+		player.dir &= 0x03;
 
 		clear_canvas();
 
@@ -172,19 +222,19 @@ void main(void) {
 		*/
 		for (y = 3, z = 1, prev_z = 0; y > -1; y--, prev_z = z, z += z) {
 			// Left
-			if (map[player_y + y][player_x + 1] == '#') {
+			if (get_map_at(player.x, player.y, -1, y, player.dir) == '#') {
 				draw_front(z, -(z + z));
 				draw_side(prev_z, z, -1);
 			}
 
 			// Right
-			if (map[player_y + y][player_x - 1] == '#') {
+			if (get_map_at(player.x, player.y, 1, y, player.dir) == '#') {
 				draw_front(z, (z + z));
 				draw_side(prev_z, z, 1);
 			}
 
 			// Center
-			if (map[player_y + y][player_x] == '#') {
+			if (get_map_at(player.x, player.y, 0, y, player.dir) == '#') {
 				draw_front(z, 0);
 			}
 		}
