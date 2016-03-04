@@ -195,6 +195,33 @@ void move_actor_direction(actor *a, char dx, char dy) {
 	}
 }
 
+void move_player(actor *p, unsigned int kp) {
+	if (!p->delay) {
+		if (kp & PORT_A_KEY_UP) {
+			move_actor_direction(p, 0, 1);
+			p->delay = 15;
+		}
+		if (kp & PORT_A_KEY_DOWN) {
+			move_actor_direction(p, 0, -1);
+			p->delay = 15;
+		}
+		if (kp & PORT_A_KEY_LEFT) {
+			p->dir++;
+			p->delay = 15;
+		}
+		if (kp & PORT_A_KEY_RIGHT) {
+			p->dir--;
+			p->delay = 15;
+		}
+		p->dir &= DIRECTION_MASK;
+	} else {
+		p->delay -= current_frame_counter;
+		if (p->delay < 0) {
+			p->delay = 0;
+		}
+	}
+}
+
 void main(void) {
 	char timer, z, prev_z;
 	char y, t_x, t_y;
@@ -222,30 +249,7 @@ void main(void) {
 		frame_counter = 0;
 		draw_char(0, 1, (test_counter & 0x0F) + 33);
 
-		if (!player.delay) {
-			if (kp & PORT_A_KEY_UP) {
-				move_actor_direction(&player, 0, 1);
-				player.delay = 15;
-			}
-			if (kp & PORT_A_KEY_DOWN) {
-				move_actor_direction(&player, 0, -1);
-				player.delay = 15;
-			}
-			if (kp & PORT_A_KEY_LEFT) {
-				player.dir++;
-				player.delay = 15;
-			}
-			if (kp & PORT_A_KEY_RIGHT) {
-				player.dir--;
-				player.delay = 15;
-			}
-			player.dir &= DIRECTION_MASK;
-		} else {
-			player.delay -= current_frame_counter;
-			if (player.delay < 0) {
-				player.delay = 0;
-			}
-		}
+		move_player(&player, kp);
 
 		clear_canvas();
 
@@ -283,10 +287,6 @@ void main(void) {
 		}
 
 		SMS_waitForVBlank();
-		/*
-		SMS_enableLineInterrupt();
-		SMS_setLineCounter(4);
-		*/
 		draw_window_canvas(1, 1);
 
 		timer = (timer + 1) % 7;
