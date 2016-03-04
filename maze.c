@@ -11,6 +11,7 @@
 #define WINDOW_CENTER_X (WINDOW_WIDTH >> 1)
 #define WINDOW_CENTER_Y (WINDOW_HEIGHT >> 1)
 
+#define DIRECTION_MASK 0x03
 #define DIRECTION_EAST 0
 #define DIRECTION_NORTH 1
 #define DIRECTION_WEST 2
@@ -174,6 +175,13 @@ char get_map_at(char x, char y, char dx, char dy, char dir) {
 	return map[y][x];
 }
 
+void move_actor_direction(actor *a, char dx, char dy) {
+	char dir = a->dir;
+
+	a->x += project_x(dx, dy, dir);
+	a->y += project_y(dx, dy, dir);
+}
+
 void main(void) {
 	char timer, z, prev_z;
 	char y, t_x, t_y;
@@ -192,10 +200,10 @@ void main(void) {
 		kp = SMS_getKeysStatus();
 
 		if (kp & PORT_A_KEY_UP) {
-			player.y++;
+			move_actor_direction(&player, 0, 1);
 		}
 		if (kp & PORT_A_KEY_DOWN) {
-			player.y--;
+			move_actor_direction(&player, 0, -1);
 		}
 		if (kp & PORT_A_KEY_LEFT) {
 			player.dir++;
@@ -203,7 +211,7 @@ void main(void) {
 		if (kp & PORT_A_KEY_RIGHT) {
 			player.dir--;
 		}
-		player.dir &= 0x03;
+		player.dir &= DIRECTION_MASK;
 
 		clear_canvas();
 
