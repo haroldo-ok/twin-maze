@@ -23,6 +23,10 @@ typedef struct _actor {
 	int delay;
 } actor;
 
+typedef struct _control_scheme {
+	unsigned int forward, backward, turn_left, turn_right;
+} control_scheme;
+
 char window_canvas[WINDOW_WIDTH][WINDOW_HEIGHT];
 
 unsigned char frame_counter, current_frame_counter, test_counter;
@@ -38,6 +42,13 @@ const char map[][8] = {
 	"#.#.#.#",
 	"#.....#",
 	"#######",
+};
+
+const control_scheme player_1_controls = {
+	PORT_A_KEY_UP, PORT_A_KEY_DOWN, PORT_A_KEY_LEFT, PORT_A_KEY_RIGHT
+};
+const control_scheme player_2_controls = {
+	PORT_B_KEY_UP, PORT_B_KEY_DOWN, PORT_B_KEY_LEFT, PORT_B_KEY_RIGHT
 };
 
 void line_interrupt_handler() {
@@ -184,21 +195,21 @@ void move_actor_direction(actor *a, char dx, char dy) {
 	}
 }
 
-void move_player(actor *p, unsigned int kp) {
+void move_player(actor *p, unsigned int kp, control_scheme *ctl) {
 	if (!p->delay) {
-		if (kp & PORT_A_KEY_UP) {
+		if (kp & ctl->forward) {
 			move_actor_direction(p, 0, 1);
 			p->delay = 15;
 		}
-		if (kp & PORT_A_KEY_DOWN) {
+		if (kp & ctl->backward) {
 			move_actor_direction(p, 0, -1);
 			p->delay = 15;
 		}
-		if (kp & PORT_A_KEY_LEFT) {
+		if (kp & ctl->turn_left) {
 			p->dir++;
 			p->delay = 15;
 		}
-		if (kp & PORT_A_KEY_RIGHT) {
+		if (kp & ctl->turn_right) {
 			p->dir--;
 			p->delay = 15;
 		}
@@ -267,8 +278,8 @@ void main(void) {
 		frame_counter = 0;
 		draw_char(0, 1, (test_counter & 0x0F) + 33);
 
-		move_player(&player_1, kp);
-		move_player(&player_2, kp);
+		move_player(&player_1, kp, &player_1_controls);
+		move_player(&player_2, kp, &player_2_controls);
 
 		alternating_frame = !alternating_frame;
 
