@@ -6,19 +6,15 @@
 // #define TARGET_GG
 /* uncomment previous line to compile for the GameGear */
 
-// #define NO_MD_PAD_SUPPORT
-/* uncomment previous line to remove support for the Genesis/MegaDrive pad (SMS only) */
-
-#ifdef TARGET_GG
-#define NO_MD_PAD_SUPPORT          /* no MD pad support on GG! */
-#endif
+// #define MD_PAD_SUPPORT
+/* uncomment previous line to add support for the Genesis/MegaDrive pad (SMS only) */
 
 /* library initialization. you don't need to call this if you use devkitSMS crt0.rel */
 void SMS_init (void);
 
 /* VDP operative mode handling functions */
-void SMS_VDPturnOnFeature (unsigned int feature);
-void SMS_VDPturnOffFeature (unsigned int feature);
+void SMS_VDPturnOnFeature (unsigned int feature) __z88dk_fastcall;
+void SMS_VDPturnOffFeature (unsigned int feature)__z88dk_fastcall;
 /* turns on/off a VDP feature */
 /* feature can be one of the following: */
 
@@ -26,6 +22,7 @@ void SMS_VDPturnOffFeature (unsigned int feature);
 #define VDPFEATURE_EXTRAHEIGHT      0x0002
 #define VDPFEATURE_SHIFTSPRITES     0x0008
 #define VDPFEATURE_HIDEFIRSTCOL     0x0020
+#define VDPFEATURE_LEFTCOLBLANK     0x0020     /* a better name */
 #define VDPFEATURE_LOCKHSCROLL      0x0040
 #define VDPFEATURE_LOCKVSCROLL      0x0080
 
@@ -48,6 +45,12 @@ void SMS_setBGScrollX (int scrollX);
 void SMS_setBGScrollY (int scrollY);
 void SMS_setBackdropColor (unsigned char entry);
 void SMS_useFirstHalfTilesforSprites (_Bool usefirsthalf);
+void SMS_setSpriteMode (unsigned char mode);
+/* modes for SMS_setSpriteMode */
+#define SPRITEMODE_NORMAL         0x00
+#define SPRITEMODE_TALL           0x01
+#define SPRITEMODE_ZOOMED         0x02
+#define SPRITEMODE_TALL_ZOOMED    0x03
 
 /* macro for bankswitching */
 volatile __at (0xffff) unsigned char bank_to_be_mapped_on_slot2;
@@ -60,14 +63,22 @@ void SMS_waitForVBlank (void);
 /* GG functions to set a color / load a palette */
 void GG_setBGPaletteColor (unsigned char entry, unsigned int color);
 void GG_setSpritePaletteColor (unsigned char entry, unsigned int color);
-void GG_loadBGPalette (void *palette);
-void GG_loadSpritePalette (void *palette);
+void GG_loadBGPalette (void *palette) __z88dk_fastcall;
+void GG_loadSpritePalette (void *palette) __z88dk_fastcall;
+/* GG macros for colors */
+#define RGB(r,g,b)        ((r)|((g)<<4)|((b)<<8))
+#define RGB8(r,g,b)       (((r)>>4)|(((g)>>4)<<4)|(((b)>>4)<<8))
+#define RGBHTML(RGB24bit) (((RGB24bit)>>20)|((((RGB24bit)&0xFFFF)>>12)<<4)|((((RGB24bit)&0xFF)>>4)<<8))
 #else
 /* functions to set a color / load a palette */
 void SMS_setBGPaletteColor (unsigned char entry, unsigned char color);
 void SMS_setSpritePaletteColor (unsigned char entry, unsigned char color);
-void SMS_loadBGPalette (void *palette);
-void SMS_loadSpritePalette (void *palette);
+void SMS_loadBGPalette (void *palette) __z88dk_fastcall;
+void SMS_loadSpritePalette (void *palette) __z88dk_fastcall;
+/* SMS macros for colors */
+#define RGB(r,g,b)        ((r)|((g)<<2)|((b)<<4))
+#define RGB8(r,g,b)       (((r)>>6)|(((g)>>6)<<2)|(((b)>>6)<<4))
+#define RGBHTML(RGB24bit) (((RGB24bit)>>22)|((((RGB24bit)&0xFFFF)>>14)<<2)|((((RGB24bit)&0xFF)>>6)<<4))
 #endif
 
 /* functions to load tiles into VRAM */
@@ -78,9 +89,17 @@ void SMS_loadPSGaidencompressedTiles (void *src, unsigned int tilefrom);
 void SMS_loadTileMap (unsigned char x, unsigned char y, void *src, unsigned int size);
 void SMS_loadSTMcompressedTileMap (unsigned char x, unsigned char y, unsigned char *src);
 void SMS_loadTileMapArea (unsigned char x, unsigned char y, void *src, unsigned char width, unsigned char height);
-void SMS_setTileatXY (unsigned char x, unsigned char y, unsigned int tile);
-void SMS_setNextTileatXY (unsigned char x, unsigned char y);
-void SMS_setTile (unsigned int tile);
+
+/* function for setting tiles/moving 'cursor' */
+void SMS_setTile (unsigned int tile) __z88dk_fastcall __preserves_regs(b,c,d,e,h,l,iyh,iyl);
+void SMS_setNextTileatAddr (unsigned int addr) __z88dk_fastcall __preserves_regs(a,b,d,e,h,l,iyh,iyl);
+/* PNT define (has address and VDP flags) */
+#define SMS_PNTAddress            ((unsigned int)0x7800)
+/* macro for turning x,y into VRAM addr */
+#define XYtoADDR(x,y)             (SMS_PNTAddress+(((unsigned int)(y)<<6)|((unsigned char)(x)<<1)))
+#define SMS_setNextTileatXY(x,y)  SMS_setNextTileatAddr(XYtoADDR((x),(y)))
+#define SMS_setNextTileatLoc(loc) SMS_setNextTileatAddr(SMS_PNTAddress+((unsigned int)(loc)<<1))
+#define SMS_setTileatXY(x,y,tile) {SMS_setNextTileatAddr(XYtoADDR((x),(y)));SMS_setTile(tile);}
 
 /* handy defines for tilemaps entry */
 #define TILE_FLIPPED_X            0x0200
@@ -103,6 +122,8 @@ unsigned int SMS_getKeysHeld (void);
 unsigned int SMS_getKeysReleased (void);
 
 /* handy defines for joypad(s) handling */
+#ifndef CONTROLLER_PORTS
+#define CONTROLLER_PORTS
 #define PORT_A_KEY_UP           0x0001
 #define PORT_A_KEY_DOWN         0x0002
 #define PORT_A_KEY_LEFT         0x0004
@@ -119,16 +140,17 @@ unsigned int SMS_getKeysReleased (void);
 #define PORT_B_KEY_2            0x0800
 #define PORT_B_KEY_START        PORT_B_KEY_1    /* handy alias */
 
-#define RESET_KEY_NOT           0x1000          /* 0 = pressed */
+#define RESET_KEY               0x1000          /* (absent on SMS II) */
 #define CARTRIDGE_SLOT          0x2000          /* ??? */
 #define PORT_A_TH               0x4000          /* for light gun */
 #define PORT_B_TH               0x8000          /* for light gun */
+#endif
 
 #ifdef TARGET_GG
 #define GG_KEY_START            0x8000          /* START key on GG */
 #endif
 
-#ifndef NO_MD_PAD_SUPPORT
+#ifdef MD_PAD_SUPPORT
 /* functions to read additional MD buttons */
 unsigned int SMS_getMDKeysStatus (void);
 unsigned int SMS_getMDKeysPressed (void);
@@ -151,6 +173,14 @@ _Bool SMS_queryPauseRequested (void);
 void SMS_resetPauseRequest (void);
 #endif
 
+#ifndef TARGET_GG
+/* VDPType handling (SMS only) */
+unsigned char SMS_VDPType (void);
+/* WARNING: these constants may change value later, please use defines */
+#define VDP_PAL                 0x80
+#define VDP_NTSC                0x40
+#endif
+
 /* line interrupt */
 void SMS_setLineInterruptHandler (void (*theHandlerFunction)(void));
 void SMS_setLineCounter (unsigned char count);
@@ -170,17 +200,33 @@ void SMS_VRAMmemsetW (unsigned int dst, unsigned int value, unsigned int size);
 
 /* VRAM unsafe functions. Fast, but dangerous! */
 void UNSAFE_SMS_copySpritestoSAT (void);
+void UNSAFE_SMS_VRAMmemcpy32 (unsigned int dst, void *src);
+void UNSAFE_SMS_VRAMmemcpy64 (unsigned int dst, void *src);
+void UNSAFE_SMS_VRAMmemcpy128 (unsigned int dst, void *src);
+
+/* handy macros for UNSAFE_SMS_VRAMmemcpy* */
+#define UNSAFE_SMS_load1Tile(src,theTile)     UNSAFE_SMS_VRAMmemcpy32((theTile)*32,(src))
+#define UNSAFE_SMS_load2Tiles(src,tilefrom)   UNSAFE_SMS_VRAMmemcpy64((tilefrom)*32,(src))
+#define UNSAFE_SMS_load4Tiles(src,tilefrom)   UNSAFE_SMS_VRAMmemcpy128((tilefrom)*32,(src))
 
 /* macros for SEGA and SDSC headers */
 #define SMS_BYTE_TO_BCD(n) (((n)/10)*16+((n)%10))
 
-#define SMS_EMBED_SEGA_ROM_HEADER(productCode,revision) \
+#ifndef TARGET_GG
+/* "SMS Export" (32KB) */
+#define SMS_EMBED_SEGA_ROM_HEADER_REGION_CODE  0x4C
+#else
+/* "GG international" (32KB) */
+#define SMS_EMBED_SEGA_ROM_HEADER_REGION_CODE  0x7C
+#endif
+
+#define SMS_EMBED_SEGA_ROM_HEADER(productCode,revision)                                        \
  const __at (0x7ff0) unsigned char __SMS__SEGA_signature[16]={'T','M','R',' ','S','E','G','A', \
                                                                           0xFF,0xFF,0xFF,0xFF, \
                   SMS_BYTE_TO_BCD((productCode)%100),SMS_BYTE_TO_BCD(((productCode)/100)%100), \
-                                            (((productCode)/10000)<<4)|((revision)&0x0f),0x4C}
+           (((productCode)/10000)<<4)|((revision)&0x0f),SMS_EMBED_SEGA_ROM_HEADER_REGION_CODE}
 
-#define SMS_EMBED_SDSC_HEADER(verMaj,verMin,dateYear,dateMonth,dateDay,author,name,descr) \
+#define SMS_EMBED_SDSC_HEADER(verMaj,verMin,dateYear,dateMonth,dateDay,author,name,descr)      \
                           const __at (0x7fe0-sizeof(author)) char __SMS__SDSC_author[]=author; \
                  const __at (0x7fe0-sizeof(author)-sizeof(name)) char __SMS__SDSC_name[]=name; \
  const __at (0x7fe0-sizeof(author)-sizeof(name)-sizeof(descr)) char __SMS__SDSC_descr[]=descr; \
@@ -193,6 +239,10 @@ void UNSAFE_SMS_copySpritestoSAT (void);
                                       (0x7fe0-sizeof(author)-sizeof(name)-sizeof(descr))&0xff, \
                                         (0x7fe0-sizeof(author)-sizeof(name)-sizeof(descr))>>8}
 /* pretty nice, isn't it? :) */
+
+/* to set SDSC header date to 0000-00-00 so that ihx2sms updates that with compilation date */
+#define SMS_EMBED_SDSC_HEADER_AUTO_DATE(verMaj,verMin,author,name,descr)                       \
+                        SMS_EMBED_SDSC_HEADER((verMaj),(verMin),0,0,0,(author),(name),(descr))
 
 /* the Interrupt Service Routines (do not modify) */
 void SMS_isr (void) __interrupt;

@@ -85,7 +85,7 @@ void draw_char(unsigned char x, unsigned char y, char c) {
   SMS_setTileatXY(x, y, c - 32);
 }
 
-void draw_canvas_char(char x, char y, char c) {
+void draw_canvas_char(int x, int y, char c) {
 	if (x >= 0 && x < WINDOW_WIDTH && y >= 0 && y < WINDOW_HEIGHT) {
 		window_canvas[x][y] = c;
 	}
@@ -108,16 +108,16 @@ void draw_front(unsigned char z, char pos) {
 	}
 }
 
-void draw_side(unsigned char z1, unsigned char z2, char pos) {
-	char incr = pos < 0 ? -1 : 1;
-	char x1 = WINDOW_CENTER_X + (pos < 0 ?  -z1 - 1 : z1);
-	char x2 = WINDOW_CENTER_X + (pos < 0 ?  -z2 - 1 : z2);
-	char y1 = WINDOW_CENTER_Y - z1 - 1;
-	char y2 = WINDOW_CENTER_Y + z1;
+void draw_side(unsigned char z1, unsigned char z2, int pos) {
+	int incr = pos < 0 ? -1 : 1;
+	int x1 = WINDOW_CENTER_X + (pos < 0 ?  -z1 - 1 : z1);
+	int x2 = WINDOW_CENTER_X + (pos < 0 ?  -z2 - 1 : z2);
+	int y1 = WINDOW_CENTER_Y - z1 - 1;
+	int y2 = WINDOW_CENTER_Y + z1;
 	char ch0 = '|';
 	char cht = pos < 0 ? '\\' : '/';
 	char chb = pos < 0 ? '/' : '\\';
-	char xi, yi;
+	int xi, yi;
 
 	if (z2 <= z1) {
 		return;
@@ -148,7 +148,7 @@ void draw_window_canvas(unsigned int *buffer) {
 		}
 }
 
-char project_x(char x, char y, char direction) {
+char project_x(int x, int y, int direction) {
 	switch (direction) {
 		case DIRECTION_NORTH:
 			return x;
@@ -163,7 +163,7 @@ char project_x(char x, char y, char direction) {
 	return 0;
 }
 
-char project_y(char x, char y, char direction) {
+char project_y(int x, int y, char direction) {
 	switch (direction) {
 		case DIRECTION_NORTH:
 			return -y;
@@ -178,13 +178,13 @@ char project_y(char x, char y, char direction) {
 	return 0;
 }
 
-char get_map_at(char x, char y, char dx, char dy, char dir) {
+char get_map_at(int x, int y, int dx, int dy, int dir) {
 	x += project_x(dx, dy, dir);
 	y += project_y(dx, dy, dir);
 	return map[y][x];
 }
 
-void move_actor_direction(actor *a, char dx, char dy) {
+void move_actor_direction(actor *a, int dx, int dy) {
 	char dir = a->dir;
 	char nx = a->x + project_x(dx, dy, dir);
 	char ny = a->y + project_y(dx, dy, dir);
@@ -223,8 +223,8 @@ void move_player(actor *p, unsigned int kp, control_scheme *ctl) {
 }
 
 void draw_player(actor *p) {
-	char y;
-	char z, prev_z;
+	int y;
+	int z, prev_z;
 
 	for (y = 3, z = 1, prev_z = 0; y > -1; y--, prev_z = z, z += z) {
 		// Left

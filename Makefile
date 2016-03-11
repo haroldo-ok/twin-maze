@@ -17,8 +17,8 @@ maze.rel: gfx.c
 %.sms:	%.ihx
 	ihx2sms $< $@
 
-maze.ihx:	maze.rel SMSlib/SMSlib.rel PSGlib/PSGlib.rel gfx.rel
-	$(CC) --data-loc 0xC000 $^
+maze.ihx:	SMSlib/crt0_sms.rel maze.rel SMSlib/SMSlib.lib gfx.rel
+	$(CC) --no-std-crt0 --data-loc 0xC000 -o maze.ihx $^
 
 clean:
 	rm -f *.ihx *.lk *.lst *.map *.noi *.rel *.sym *.asm *.sms gfx.*

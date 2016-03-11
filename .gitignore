@@ -4,7 +4,7 @@ gfx.*
 *.lst
 *.map
 *.noi
-*.rel
+/*.rel
 *.sym
 *.asm
 *.sav
