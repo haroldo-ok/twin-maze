@@ -18,8 +18,8 @@
 #define DIRECTION_SOUTH 3
 
 typedef struct _actor {
-	char x, y;
-	char dir;
+	int x, y;
+	int dir;
 	int delay;
 } actor;
 
@@ -148,7 +148,7 @@ void draw_window_canvas(unsigned int *buffer) {
 		}
 }
 
-char project_x(int x, int y, int direction) {
+int project_x(int x, int y, int direction) {
 	switch (direction) {
 		case DIRECTION_NORTH:
 			return x;
@@ -163,7 +163,7 @@ char project_x(int x, int y, int direction) {
 	return 0;
 }
 
-char project_y(int x, int y, char direction) {
+int project_y(int x, int y, int direction) {
 	switch (direction) {
 		case DIRECTION_NORTH:
 			return -y;
