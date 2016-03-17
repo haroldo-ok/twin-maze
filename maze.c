@@ -55,6 +55,10 @@ void line_interrupt_handler() {
 	frame_counter++;
 }
 
+void putchar (char c) {
+	SMS_setTile(c - 32);
+}
+
 void load_palette() {
 	unsigned char i;
 
@@ -269,6 +273,11 @@ void main(void) {
 	player_2.y = 1;
 	player_2.dir = DIRECTION_WEST;
 	player_2.delay = 0;
+
+	SMS_setNextTileatXY(1, 16);
+	puts("Player 1");
+	SMS_setNextTileatXY(16, 16);
+	puts("Player 2");
 
 	while (true) {
 		kp = SMS_getKeysStatus();
