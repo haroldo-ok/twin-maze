@@ -32,6 +32,10 @@ char window_canvas[WINDOW_WIDTH][WINDOW_HEIGHT];
 unsigned char frame_counter, current_frame_counter, test_counter;
 actor player_1, player_2;
 unsigned int player_tiles[WINDOW_WIDTH * WINDOW_HEIGHT];
+const actor *players[] = {&player_1, &player_2};
+
+unsigned char *skull_sprite_pointers[4][3];
+const int skull_offs[] = {0, 3, 4};
 
 const char map[][8] = {
 	"#######",
@@ -137,6 +141,36 @@ void draw_side(unsigned char z1, unsigned char z2, int pos) {
 	}
 }
 
+void prepare_text_sprites() {
+	unsigned char cur_size;
+	char *p = skull_txt;
+
+	for (cur_size = 0; cur_size < 3; cur_size++) {
+		skull_sprite_pointers[0][cur_size] = p;
+
+		while (*p != '*') p++;
+		while (*p != '\n') p++;
+		p++;
+	}
+}
+
+void draw_text_sprite(int x, int y, char *text) {
+	char *ch;
+	int xi = x, yi = y;
+
+	for (ch = text; *ch != '*'; ch++) {
+		if (*ch == '\n') {
+			xi = x;
+			yi++;
+		} else {
+			if (*ch != '!') {
+				draw_canvas_char(xi, yi, *ch);
+			}
+			xi++;
+		}
+	}
+}
+
 void clear_canvas() {
 	memset(window_canvas[0], ' ', WINDOW_WIDTH * WINDOW_HEIGHT);
 }
@@ -188,6 +222,12 @@ char get_map_at(int x, int y, int dx, int dy, int dir) {
 	return map[y][x];
 }
 
+bool is_actor_at(int x, int y, int dx, int dy, int dir, actor *a) {
+	x += project_x(dx, dy, dir);
+	y += project_y(dx, dy, dir);
+	return a->x == x && a->y == y;
+}
+
 void move_actor_direction(actor *a, int dx, int dy) {
 	char dir = a->dir;
 	char nx = a->x + project_x(dx, dy, dir);
@@ -230,6 +270,9 @@ void draw_player(actor *p) {
 	int y;
 	int z, prev_z;
 
+	char p_num;
+	actor *p2;
+
 	for (y = 3, z = 1, prev_z = 0; y > -1; y--, prev_z = z, z += z) {
 		// Left
 		if (get_map_at(p->x, p->y, -1, y, p->dir) == '#') {
@@ -248,7 +291,18 @@ void draw_player(actor *p) {
 			draw_front(z, 0);
 		}
 
+		// Actor
+		if (y < 3) {
+			for (p_num = 0; p_num < 2; p_num++) {
+				p2 = players[p_num];
+				if (is_actor_at(p->x, p->y, 0, y + 1, p->dir, p2)) {
+					draw_text_sprite(skull_offs[y], skull_offs[y], skull_sprite_pointers[0][y]);
+				}
+			}
+		}
+
 	}
+
 }
 
 void main(void) {
@@ -257,6 +311,7 @@ void main(void) {
 
 	load_palette();
 	load_font();
+	prepare_text_sprites();
 	SMS_displayOn();
 
 	frame_counter = 0;

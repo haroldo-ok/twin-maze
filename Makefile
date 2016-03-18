@@ -6,7 +6,7 @@ BINS	= maze.sms
 
 all:	$(BINS)
 
-gfx.c: gfx/font.fnt
+gfx.c: gfx/font.fnt gfx/skull.txt
 	folder2c gfx gfx
 
 maze.rel: gfx.c
