@@ -142,15 +142,17 @@ void draw_side(unsigned char z1, unsigned char z2, int pos) {
 }
 
 void prepare_text_sprites() {
-	unsigned char cur_size;
+	unsigned char direction, cur_size;
 	char *p = skull_txt;
 
-	for (cur_size = 0; cur_size < 3; cur_size++) {
-		skull_sprite_pointers[0][cur_size] = p;
+	for (direction = 0; direction < 4; direction++) {
+		for (cur_size = 0; cur_size < 3; cur_size++) {
+			skull_sprite_pointers[direction][cur_size] = p;
 
-		while (*p != '*') p++;
-		while (*p != '\n') p++;
-		p++;
+			while (*p != '*') p++;
+			while (*p != '\n') p++;
+			p++;
+		}
 	}
 }
 
@@ -296,7 +298,8 @@ void draw_player(actor *p) {
 			for (p_num = 0; p_num < 2; p_num++) {
 				p2 = players[p_num];
 				if (is_actor_at(p->x, p->y, 0, y + 1, p->dir, p2)) {
-					draw_text_sprite(skull_offs[y], skull_offs[y], skull_sprite_pointers[0][y]);
+					draw_text_sprite(skull_offs[y], skull_offs[y],
+							skull_sprite_pointers[(p2->dir - p->dir + 1) & 0x03][y]);
 				}
 			}
 		}
