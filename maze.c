@@ -11,6 +11,9 @@
 #define WINDOW_CENTER_X (WINDOW_WIDTH >> 1)
 #define WINDOW_CENTER_Y (WINDOW_HEIGHT >> 1)
 
+#define MAP_WINDOW_X 1
+#define MAP_WINDOW_Y 16
+
 #define DIRECTION_MASK 0x03
 #define DIRECTION_EAST 0
 #define DIRECTION_NORTH 1
@@ -22,6 +25,10 @@ typedef struct _actor {
 	int dir;
 	int delay;
 } actor;
+
+typedef struct _point {
+	int x, y;
+} point;
 
 typedef struct _control_scheme {
 	unsigned int forward, backward, turn_left, turn_right;
@@ -36,6 +43,8 @@ const actor *players[] = {&player_1, &player_2};
 
 unsigned char *skull_sprite_pointers[4][3];
 const int skull_offs[] = {0, 3, 4};
+
+point prev_map_pos[2];
 
 const char map[][8] = {
 	"#######",
@@ -115,10 +124,27 @@ void draw_map() {
 	char y, *c;
 
 	for (y = 0; y < 8; y++) {
-		SMS_setNextTileatXY(1, y + 16);
+		SMS_setNextTileatXY(MAP_WINDOW_X, y + MAP_WINDOW_Y);
 		for (c = map[y]; *c; c++) {
 			SMS_setTile(*c - 32);
 		}
+	}
+}
+
+void draw_players_on_map() {
+	char i;
+	actor *p;
+	point *prev;
+
+	for (i = 0; i < 2; i++) {
+		p = players[i];
+		prev = prev_map_pos + i;
+
+		draw_char(prev->x + MAP_WINDOW_X, prev->y + MAP_WINDOW_Y, '.');
+		draw_char(p->x + MAP_WINDOW_X, p->y + MAP_WINDOW_Y, '1' + i);
+
+		prev->x = p->x;
+		prev->y = p->y;
 	}
 }
 
@@ -356,6 +382,11 @@ void main(void) {
 	player_2.dir = DIRECTION_WEST;
 	player_2.delay = 0;
 
+	prev_map_pos[0].x = player_1.x;
+	prev_map_pos[0].y = player_1.y;
+	prev_map_pos[1].x = player_2.x;
+	prev_map_pos[1].y = player_2.y;
+
 	SMS_setNextTileatXY(2, 15);
 	puts("Player 1");
 	SMS_setNextTileatXY(17, 15);
@@ -380,6 +411,7 @@ void main(void) {
 
 		SMS_waitForVBlank();
 		SMS_loadTileMapArea (alternating_frame ? 1 : 17, 1, player_tiles, WINDOW_WIDTH, WINDOW_HEIGHT);
+		draw_players_on_map();
 	}
 
 }
