@@ -177,8 +177,8 @@ void draw_text_sprite(int x, int y, char *text) {
 			xi = x;
 			yi++;
 		} else {
-			if (*ch != '!') {
-				draw_canvas_char(xi, yi, *ch);
+			if (*ch != '!' && *ch >= ' ') {
+				draw_canvas_char(xi, yi, *ch + 96);
 			}
 			xi++;
 		}
