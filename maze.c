@@ -111,6 +111,17 @@ void draw_canvas_char(int x, int y, char c) {
 	}
 }
 
+void draw_map() {
+	char y, *c;
+
+	for (y = 0; y < 8; y++) {
+		SMS_setNextTileatXY(1, y + 16);
+		for (c = map[y]; *c; c++) {
+			SMS_setTile(*c - 32);
+		}
+	}
+}
+
 void draw_front(unsigned char z, char pos) {
 	char x1 = WINDOW_CENTER_X + pos - z;
 	char x2 = x1 + z + z;
@@ -327,6 +338,7 @@ void main(void) {
 	load_palette();
 	load_font();
 	prepare_text_sprites();
+	draw_map();
 	SMS_displayOn();
 
 	frame_counter = 0;
@@ -344,9 +356,9 @@ void main(void) {
 	player_2.dir = DIRECTION_WEST;
 	player_2.delay = 0;
 
-	SMS_setNextTileatXY(1, 16);
+	SMS_setNextTileatXY(2, 15);
 	puts("Player 1");
-	SMS_setNextTileatXY(16, 16);
+	SMS_setNextTileatXY(17, 15);
 	puts("Player 2");
 
 	while (true) {
