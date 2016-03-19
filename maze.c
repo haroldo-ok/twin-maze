@@ -70,22 +70,34 @@ void load_palette() {
     SMS_setBGPaletteColor(i,0x00);    // black
 	}
   SMS_setBGPaletteColor(01,0x3f);     // white
+	SMS_setBGPaletteColor(02,0x0C);     // green
+	SMS_setBGPaletteColor(03,0x03);     // red
 }
 
-void load_font(void) {
-	unsigned char i, j;
+void load_colored_font(int base_tile, char color) {
+	unsigned char i, j, k, c;
 	unsigned char buffer[32], *o, *d;
 
 	o = font_fnt;
 	for (i = 0; i != 96; i++) {
 		d = buffer;
 		for (j = 0; j != 8; j++) {
-			*d = *o; d++;	o++;
-			*d = 0;	d++;
-			*d = 0;	d++;
-			*d = 0;	d++;
+			for (k = 4, c = color; k; k--, c >>= 1) {
+				*d = c & 0x01 ? *o : 0;
+				d++;
+			}
+			o++;
 		}
-		SMS_loadTiles(buffer, i, 32);
+		SMS_loadTiles(buffer, base_tile + i, 32);
+	}
+}
+
+void load_font(void) {
+	int base_tile;
+	char color;
+
+	for (base_tile = 0, color = 1; color < 4; base_tile += 96, color++) {
+		load_colored_font(base_tile, color);
 	}
 }
 
