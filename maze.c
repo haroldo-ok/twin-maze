@@ -46,15 +46,15 @@ const int skull_offs[] = {0, 3, 4};
 
 point prev_map_pos[2];
 
-const char map[][8] = {
-	"#######",
-	"#.....#",
-	"#.###.#",
-	"#.....#",
-	"###.###",
-	"#.#.#.#",
-	"#.....#",
-	"#######",
+const char map[][31] = {
+	"##############################",
+	"#.....#..........#.......#.#.#",
+	"#.###.####.#####.#.#####.#.#.#",
+	"#.....#......#...#...........#",
+	"###.###..#.#.#.#.#.###.###.###",
+	"#.#.#...##.#.#.#...#...#.....#",
+	"#.....#....#...#.#...#.#.###.#",
+	"##############################",
 };
 
 const control_scheme player_1_controls = {
@@ -372,14 +372,14 @@ void main(void) {
 	SMS_enableLineInterrupt();
 	SMS_setLineCounter(0xC0);
 
-	player_1.x = 1;
-	player_1.y = 2;
-	player_1.dir = DIRECTION_SOUTH;
+	player_1.x = 2;
+	player_1.y = 1;
+	player_1.dir = DIRECTION_WEST;
 	player_1.delay = 0;
 
-	player_2.x = 3;
+	player_2.x = 4;
 	player_2.y = 1;
-	player_2.dir = DIRECTION_WEST;
+	player_2.dir = DIRECTION_EAST;
 	player_2.delay = 0;
 
 	prev_map_pos[0].x = player_1.x;
